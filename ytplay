@@ -2,6 +2,38 @@
 
 set -e
 
+trap 'rm -rf $YTPLAY_CACHE_TMP' EXIT
+
+preflight() {
+    if ! [[ $BASH_VERSION =~ ^5.3+ ]]; then
+        echo "Requires Bash verison 5.3+"
+        exit 1
+    fi
+
+    local required=( vlc yt-dlp )
+    for app in "${required[@]}"; do
+        if [[ ! ${ which "$app"; } ]]; then
+            echo "$app executable cannot be found."
+            echo "install $app to use this script."
+            exit 1
+        fi
+    done
+
+    YTPLAY_CACHE_TMP="/tmp/YTPLAY_CACHE"
+    NUMBER=30
+    SEARCH=()
+    YTDLP_ARGS=()
+    VLC_ARGS=()
+
+    if [[ ! -d $YTPLAY_CACHE ]] && [[ -v YTPLAY_CACHE ]]; then
+        mkdir "$YTPLAY_CACHE"
+    fi
+    if [[ ! -d $YTPLAY_CACHE_TMP ]] && [[ -v YTPLAY_CACHE ]]; then
+        mkdir "$YTPLAY_CACHE_TMP"
+    fi
+
+}
+
 search() {
     local number="$1"; shift
     local s="$1"; shift
@@ -79,24 +111,14 @@ usage() {
 	                     If unset, videos are streamed and not cached.
 
 	Examples:
-	  ${0##*/} -s "lofi hip hop" -n 10
-	  ${0##*/} -p dQw4w9WgXcQ -f -r 1.5
-	  ${0##*/} -s "talk" -c firefox
+	  ${0##*/} -n 10 -s "lofi hip hop"
+	  ${0##*/} -f -r 1.5 -p dQw4w9WgXcQ
+	  ${0##*/} -c firefox -s "talk"
 	EOF
 }
 
-trap 'rm -rf $YTPLAY_CACHE_TMP' EXIT
-
-YTPLAY_CACHE_TMP="/tmp/YTPLAY_CACHE"
-YTPLAY_CACHE="/Volumes/DOOM/YTPLAY_CACHE"
-NUMBER=30
-SEARCH=()
-YTDLP_ARGS=()
-VLC_ARGS=()
 main() {
-
-    if ! [[ -d $YTPLAY_CACHE ]]; then mkdir "$YTPLAY_CACHE"; fi
-    if ! [[ -d $YTPLAY_CACHE_TMP ]]; then mkdir "$YTPLAY_CACHE_TMP"; fi
+    preflight
 
     local OPTIND OPTARG opt
     while getopts "s:p:n:r:c:fh" opt; do
