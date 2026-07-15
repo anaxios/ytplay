@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+
+set -e
+
+search() {
+    local number="$1"; shift
+    local s="$1"; shift
+    local tmp
+    tmp="${ yt-dlp                               \
+        --flat-playlist "ytsearch${number}:${s}" \
+        --print "%(id)s %(playlist_index)-3d %(title)s | %(channel,uploader)s | %(duration_string)s"; }"
+    mapfile -t SEARCH <<<"$tmp"
+    for i in "${SEARCH[@]}"; do
+        local name
+        IFS=' ' read -r _ name <<<"${i}"
+        echo "$name"
+    done
+}
+
+play() {
+    if ! [[ -v YTPLAY_CACHE ]]; then
+        yt-dlp                                        \
+            --remote-components ejs:github            \
+            -f "bestvideo+bestaudio/best"             \
+            "${YTDLP_ARGS[@]}"                        \
+            -o - "https://www.youtube.com/watch?v=$1" \
+            | vlc                                     \
+            --network-caching=5000                    \
+            --play-and-exit "${VLC_ARGS[@]}"          \
+            - 2>/dev/null
+        return
+    fi
+
+    if [[ -f "${YTPLAY_CACHE}/${1}.mp4" ]]; then
+        vlc --play-and-exit "${VLC_ARGS[@]}" "${YTPLAY_CACHE}/$1.mp4" &>/dev/null
+    else
+        yt-dlp                                        \
+            --remote-components ejs:github            \
+            -f "bestvideo+bestaudio/best"             \
+            "${YTDLP_ARGS[@]}"                        \
+            -o - "https://www.youtube.com/watch?v=$1" \
+            | tee "${YTPLAY_CACHE_TMP}/${1}.mp4"      \
+            | vlc                                     \
+            --network-caching=5000                    \
+            --play-and-exit "${VLC_ARGS[@]}"          \
+            - 2>/dev/null
+
+        if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+            cp "${YTPLAY_CACHE_TMP}/${1}.mp4" "${YTPLAY_CACHE}/" \
+                && rm -rf "$YTPLAY_CACHE_TMP/${1}.mp4"
+        else
+           rm -f "$YTPLAY_CACHE_TMP/${1}.mp4"
+        fi
+    fi
+
+}
+
+usage() {
+	cat <<-EOF
+	Usage: ${0##*/} [-s QUERY] [-p VIDEO_ID] [-n NUMBER] [-r RATE] [-c BROWSER] [-f] [-h]
+
+	A thin yt-dlp/vlc wrapper for searching and playing YouTube videos,
+	with optional local caching.
+
+	Options:
+	  -s QUERY      Search YouTube for QUERY and prompt for a video to play.
+	                Enter a number to play that result, 'a' to play all
+	                results in sequence, or 'q' to quit.
+	  -p VIDEO_ID   Play a specific YouTube video by its ID.
+	  -n NUMBER     Number of search results to fetch with -s (default: ${NUMBER}).
+	  -r RATE       Playback rate passed to vlc's --rate option.
+	  -c BROWSER    Read cookies from BROWSER via yt-dlp's
+	                --cookies-from-browser (e.g. chrome, firefox, safari).
+	  -f            Play in fullscreen (vlc --fullscreen).
+	  -h            Show this help message and exit.
+
+	Environment:
+	  YTPLAY_CACHE       Directory used to cache downloaded videos.
+	                     If unset, videos are streamed and not cached.
+
+	Examples:
+	  ${0##*/} -s "lofi hip hop" -n 10
+	  ${0##*/} -p dQw4w9WgXcQ -f -r 1.5
+	  ${0##*/} -s "talk" -c firefox
+	EOF
+}
+
+trap 'rm -rf $YTPLAY_CACHE_TMP' EXIT
+
+YTPLAY_CACHE_TMP="/tmp/YTPLAY_CACHE"
+YTPLAY_CACHE="/Volumes/DOOM/YTPLAY_CACHE"
+NUMBER=30
+SEARCH=()
+YTDLP_ARGS=()
+VLC_ARGS=()
+main() {
+
+    if ! [[ -d $YTPLAY_CACHE ]]; then mkdir "$YTPLAY_CACHE"; fi
+    if ! [[ -d $YTPLAY_CACHE_TMP ]]; then mkdir "$YTPLAY_CACHE_TMP"; fi
+
+    local OPTIND OPTARG opt
+    while getopts "s:p:n:r:c:fh" opt; do
+        case "$opt" in
+            r)
+                VLC_ARGS+=( --rate "$OPTARG" )
+                ;;
+
+            f)
+                VLC_ARGS+=( --fullscreen )
+                ;;
+            n)
+                NUMBER="$OPTARG"
+                ;;
+            c)
+                YTDLP_ARGS+=( --cookies-from-browser "$OPTARG" )
+                ;;
+            s)
+                search $NUMBER "$OPTARG"
+                echo
+                echo "Choose a video to play: 'q' to quit, 'a' to play all"
+                local choice
+                read -r choice
+                if [[ $choice == "a" ]]; then
+                    local id
+                    for v in "${SEARCH[@]}"; do
+                        IFS=' ' read -r id _ <<<"${v}"
+                        play "$id"
+                        wait
+                    done
+                elif [[ $choice -gt 0 && $choice -le ${#SEARCH[@]} ]]; then
+                    IFS=' ' read -r id _ <<<"${SEARCH[choice - 1]}"
+                    play "$id"
+                else
+                    exit
+                fi
+                ;;
+            p) # play
+                play "$OPTARG"
+                ;;
+            h)
+                usage
+                exit 0
+                ;;
+            *)
+                echo "bad arg"
+                usage
+                exit 1
+                ;;
+        esac
+    done
+    #shift $((OPTIND - 1))
+}; main "$@"
+
