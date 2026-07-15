@@ -137,24 +137,30 @@ main() {
                 YTDLP_ARGS+=( --cookies-from-browser "$OPTARG" )
                 ;;
             s)
-                search $NUMBER "$OPTARG"
+                local result="${ search $NUMBER "$OPTARG"; }"
                 echo
-                echo "Choose a video to play: 'q' to quit, 'a' to play all"
                 local choice
-                read -r choice
-                if [[ $choice == "a" ]]; then
-                    local id
-                    for v in "${SEARCH[@]}"; do
-                        IFS=' ' read -r id _ <<<"${v}"
-                        play "$id"
-                        wait
+                while [[ $choice != "q" ]]; do
+                    for line in "${result[@]}"; do
+                        echo "$line"
                     done
-                elif [[ $choice -gt 0 && $choice -le ${#SEARCH[@]} ]]; then
-                    IFS=' ' read -r id _ <<<"${SEARCH[choice - 1]}"
-                    play "$id"
-                else
-                    exit
-                fi
+
+                    echo "Choose a video to play: 'q' to quit, 'a' to play all"
+                    read -r choice
+                    if [[ $choice == "a" ]]; then
+                        local id
+                        for v in "${SEARCH[@]}"; do
+                            IFS=' ' read -r id _ <<<"${v}"
+                            play "$id"
+                            wait
+                        done
+                    elif [[ $choice -gt 0 && $choice -le ${#SEARCH[@]} ]]; then
+                        IFS=' ' read -r id _ <<<"${SEARCH[choice - 1]}"
+                        play "$id"
+                    else
+                        exit
+                    fi
+                done
                 ;;
             p) # play
                 play "$OPTARG"
