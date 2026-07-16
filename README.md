@@ -1,4 +1,4 @@
-# ytplayer
+# ytplay
 
 ```
 Usage: ytplay [-s QUERY] [-c CHANNEL_NAME] [-p VIDEO_ID] [-n NUMBER] [-r RATE] [-b BROWSER] [-f] [-h]
