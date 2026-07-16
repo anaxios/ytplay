@@ -120,6 +120,7 @@ usage() {
 	  ${0##*/} -n 10 -s "lofi hip hop"
 	  ${0##*/} -f -r 1.5 -p dQw4w9WgXcQ
 	  ${0##*/} -b firefox -s "talk"
+      ${0##*/} -c "theesotericachannel" -s "platonism"
 	EOF
 }
 

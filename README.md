@@ -25,5 +25,6 @@ Examples:
   ytplay -n 10 -s "lofi hip hop"
   ytplay -f -r 1.5 -p dQw4w9WgXcQ
   ytplay -b firefox -s "talk"
+  ytplay -b firefox -c "theesotericachannel" -s "platonism"
 
 ```
