@@ -1,6 +1,6 @@
 # ytplayer
 
-```bash
+```
 Usage: ${0##*/} [-s QUERY] [-p VIDEO_ID] [-n NUMBER] [-r RATE] [-c BROWSER] [-f] [-h]
 
 A thin yt-dlp/vlc wrapper for searching and playing YouTube videos,
