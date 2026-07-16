@@ -57,7 +57,7 @@ play() {
             "${YTDLP_ARGS[@]}"                        \
             -o - "https://www.youtube.com/watch?v=$1" \
             | vlc                                     \
-            --network-caching=5000                    \
+            --network-caching=1000                    \
             --play-and-exit "${VLC_ARGS[@]}"          \
             - 2>/dev/null
         return
@@ -73,7 +73,7 @@ play() {
             -o - "https://www.youtube.com/watch?v=$1" \
             | tee "${YTPLAY_CACHE_TMP}/${1}.mp4"      \
             | vlc                                     \
-            --network-caching=5000                    \
+            --network-caching=1000                    \
             --play-and-exit "${VLC_ARGS[@]}"          \
             - 2>/dev/null
 
