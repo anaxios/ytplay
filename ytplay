@@ -20,10 +20,16 @@ preflight() {
     done
 
     YTPLAY_CACHE_TMP="/tmp/YTPLAY_CACHE"
+    YTPLAY_DIR="$HOME/.ytplay"
+    YTPLAY_SUBSCRIPTIONS="$HOME/.ytplay/subscriptions"
     NUMBER=50
     SEARCH=()
     YTDLP_ARGS=()
     VLC_ARGS=()
+
+    if [[ ! -d $YTPLAY_DIR ]]; then
+        mkdir "$YTPLAY_DIR"
+    fi
 
     if [[ ! -d $YTPLAY_CACHE ]] && [[ -v YTPLAY_CACHE ]]; then
         mkdir "$YTPLAY_CACHE"
@@ -96,13 +102,13 @@ play() {
 
 usage() {
 	cat <<-EOF
-    Usage: ${0##*/} [-s QUERY] [-c CHANNEL_NAME] [-p VIDEO_ID] [-n NUMBER] [-r RATE] [-b BROWSER] [-f] [-h]
+    Usage: ${0##*/} [-q QUERY] [-c CHANNEL_NAME] [-p VIDEO_ID] [-n NUMBER] [-r RATE] [-b BROWSER] [-f] [-h]
 
 	A thin yt-dlp/vlc wrapper for searching and playing YouTube videos,
 	with optional local caching.
 
 	Options:
-	  -s QUERY         Search YouTube for QUERY and prompt for a video to play.
+	  -q QUERY         Search YouTube for QUERY and prompt for a video to play.
       -c CHANNEL_NAME  Search a specific channel.
 	  -p VIDEO_ID      Play a specific YouTube video by its ID.
 	  -n NUMBER        Number of search results to fetch with -s (default: ${NUMBER}).
@@ -117,10 +123,10 @@ usage() {
 	                     If unset, videos are streamed and not cached.
 
 	Examples:
-	  ${0##*/} -n 10 -s "lofi hip hop"
+	  ${0##*/} -n 10 -q "lofi hip hop"
 	  ${0##*/} -f -r 1.5 -p dQw4w9WgXcQ
-	  ${0##*/} -b firefox -s "talk"
-      ${0##*/} -c "theesotericachannel" -s "platonism"
+	  ${0##*/} -b firefox -q "talk"
+      ${0##*/} -c "theesotericachannel" -q "platonism"
 	EOF
 }
 
@@ -128,7 +134,7 @@ main() {
     preflight
 
     local OPTIND OPTARG opt
-    while getopts "s:p:n:r:b:c:fh" opt; do
+    while getopts "q:p:n:r:b:c:fh" opt; do
         case "$opt" in
             r)
                 VLC_ARGS+=( --rate "$OPTARG" )
@@ -146,7 +152,7 @@ main() {
             c)
                 CHANNEL_NAME="$OPTARG"
                 ;;
-            s)
+            q)
                 local result="${ search $NUMBER "$OPTARG"; }"
                 echo
                 local choice
