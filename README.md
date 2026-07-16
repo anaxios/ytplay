@@ -1,7 +1,7 @@
 # ytplayer
 
 ```
-Usage: ${0##*/} [-s QUERY] [-p VIDEO_ID] [-n NUMBER] [-r RATE] [-c BROWSER] [-f] [-h]
+Usage: ytplay [-s QUERY] [-p VIDEO_ID] [-n NUMBER] [-r RATE] [-c BROWSER] [-f] [-h]
 
 A thin yt-dlp/vlc wrapper for searching and playing YouTube videos,
 with optional local caching.
@@ -23,8 +23,8 @@ Environment:
                      If unset, videos are streamed and not cached.
 
 Examples:
-  ${0##*/} -n 10 -s "lofi hip hop"
-  ${0##*/} -f -r 1.5 -p dQw4w9WgXcQ
-  ${0##*/} -c firefox -s "talk"
+  ytplay -n 10 -s "lofi hip hop"
+  ytplay -f -r 1.5 -p dQw4w9WgXcQ
+  ytplay -c firefox -s "talk"
 
 ```
